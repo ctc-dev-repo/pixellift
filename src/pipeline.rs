@@ -57,16 +57,77 @@ pub fn job_from_cli(cli: &Cli) -> Job {
         codec: cli.codec.clone(),
         crf: cli.crf.unwrap_or_else(|| cli.codec.default_crf()),
         fps: cli.fps.clone(),
-        ffmpeg: cli.ffmpeg.clone().unwrap_or_else(|| PathBuf::from("ffmpeg")),
-        ffprobe: cli.ffprobe.clone().unwrap_or_else(|| PathBuf::from("ffprobe")),
+        ffmpeg: cli
+            .ffmpeg
+            .clone()
+            .unwrap_or_else(|| autodetect_tool("ffmpeg").unwrap_or_else(|| PathBuf::from("ffmpeg"))),
+        ffprobe: cli
+            .ffprobe
+            .clone()
+            .unwrap_or_else(|| autodetect_tool("ffprobe").unwrap_or_else(|| PathBuf::from("ffprobe"))),
         esrgan: cli
             .esrgan
             .clone()
-            .unwrap_or_else(|| PathBuf::from("realesrgan-ncnn-vulkan")),
+            .unwrap_or_else(|| autodetect_tool("realesrgan-ncnn-vulkan").unwrap_or_else(|| PathBuf::from("realesrgan-ncnn-vulkan"))),
         workdir: cli.workdir.clone(),
         keep_frames: cli.keep_frames,
         resume: cli.resume,
     }
+}
+
+/// Locate a sidecar/tool: next to the executable first (packaged layout),
+/// then the working directory (dev layout), then the caller falls back to PATH.
+pub fn autodetect_tool(name: &str) -> Option<PathBuf> {
+    let mut bases: Vec<PathBuf> = Vec::new();
+    if let Ok(exe) = std::env::current_exe() {
+        if let Some(dir) = exe.parent() {
+            bases.push(dir.to_path_buf());
+        }
+    }
+    if let Ok(cwd) = std::env::current_dir() {
+        bases.push(cwd);
+    }
+    for base in bases {
+        let exact = base.join(name);
+        if exact.is_file() {
+            return Some(exact);
+        }
+        if let Some(found) = scan_sidecars(&base.join("sidecars"), name, 0) {
+            if found
+                .file_name()
+                .map(|n| n.to_string_lossy().starts_with(name))
+                .unwrap_or(false)
+            {
+                return Some(found);
+            }
+        }
+    }
+    None
+}
+
+fn scan_sidecars(dir: &Path, prefix: &str, depth: usize) -> Option<PathBuf> {
+    if depth > 4 {
+        return None;
+    }
+    for e in std::fs::read_dir(dir).ok()? {
+        let p = e.ok()?.path();
+        if p.is_dir() {
+            if let Some(found) = scan_sidecars(&p, prefix, depth + 1) {
+                return Some(found);
+            }
+        } else if p
+            .file_name()
+            .map(|n| n.to_string_lossy().starts_with(prefix))
+            .unwrap_or(false)
+        {
+            return Some(p);
+        }
+    }
+    None
+}
+
+pub fn autodetect_esrgan() -> Option<PathBuf> {
+    autodetect_tool("realesrgan-ncnn-vulkan")
 }
 
 fn is_cancelled(cancel: &AtomicBool) -> bool {

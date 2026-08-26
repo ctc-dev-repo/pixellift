@@ -53,9 +53,9 @@ jobs:
 
       - name: Download FFmpeg static binaries (mwader/static-ffmpeg v7.1)
         run: |
-          curl -sL -o ffmpeg "https://github.com/mwader/static-ffmpeg/releases/download/v7.1/ffmpeg.${{ matrix.ff }}${{ matrix.ffext }}"
-          curl -sL -o ffprobe "https://github.com/mwader/static-ffmpeg/releases/download/v7.1/ffprobe.${{ matrix.ff }}${{ matrix.ffext }}"
-          chmod +x ffmpeg ffprobe
+          curl -sL -o ffmpeg$FFEXT "https://github.com/mwader/static-ffmpeg/releases/download/v7.1/ffmpeg.${{ matrix.ff }}${{ matrix.ffext }}"
+          curl -sL -o ffprobe$FFEXT "https://github.com/mwader/static-ffmpeg/releases/download/v7.1/ffprobe.${{ matrix.ff }}${{ matrix.ffext }}"
+          chmod +x ffmpeg$FFEXT ffprobe$FFEXT
 
       - name: Download Real-ESRGAN sidecar + models
         run: |
@@ -67,10 +67,13 @@ jobs:
         run: |
           mkdir -p "$DIST/sidecars/realesrgan"
           cp target/release/pixellift"$FFEXT" "$DIST/$BIN"
-          cp ffmpeg ffprobe "$DIST/"
-          cp -r sidecars_esrgan/realesrgan-ncnn-vulkan-20220424-*/. "$DIST/sidecars/realesrgan/"
+          cp ffmpeg"$FFEXT" ffprobe"$FFEXT" "$DIST/"
+          ESRGAN_DIR=$(find sidecars_esrgan -maxdepth 1 -type d -name "realesrgan-ncnn-vulkan-*" | head -1)
+          cp -r "$ESRGAN_DIR/." "$DIST/sidecars/realesrgan/"
           cp README.md THIRD-PARTY-NOTICES.txt "$DIST/"
-          if [ "$RUNNER_OS" != "Windows" ]; then chmod +x "$DIST/$BIN" "$DIST/ffmpeg" "$DIST/ffprobe" "$DIST/sidecars/realesrgan/realesrgan-ncnn-vulkan"; fi
+          if [ "$RUNNER_OS" != "Windows" ]; then
+            chmod +x "$DIST/$BIN" "$DIST/ffmpeg" "$DIST/ffprobe" "$DIST/sidecars/realesrgan/realesrgan-ncnn-vulkan"
+          fi
         env:
           FFEXT: ${{ matrix.ffext }}
 
