@@ -10,8 +10,8 @@ use std::time::Duration;
 const CHUNK_SIZE: usize = 48;
 
 #[derive(Debug, Clone)]
-pub enum Event<'a> {
-    Stage(&'a str),
+pub enum Event {
+    Stage(&'static str),
     Progress { done: usize, total: usize },
     Info(String),
 }

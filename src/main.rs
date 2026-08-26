@@ -26,18 +26,10 @@ fn try_main() -> Result<()> {
         })?;
     }
 
-    if cli.gui {
+    // No input file (or explicit --gui) launches the graphical interface.
+    if cli.gui || cli.input.is_none() {
         return gui::run();
     }
-
-    let Some(input) = cli.input.clone() else {
-        eprintln!("No input file given. Examples:");
-        eprintln!("  pixellift --input clip.mp4 --scale 4");
-        eprintln!("  pixellift --gui        (milestone 2)");
-        eprintln!("See --help for all options.");
-        return Ok(());
-    };
-    drop(input);
 
     let job = pipeline::job_from_cli(&cli);
     let started = std::time::Instant::now();
