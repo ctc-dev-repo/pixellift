@@ -24,11 +24,6 @@ jobs:
             target: ""
             ff: macos-arm64
             ffext: ""
-          - name: macos-intel
-            os: macos-14
-            target: x86_64-apple-darwin
-            ff: macos-amd64
-            ffext: ""
           - name: linux-amd64
             os: ubuntu-22.04
             target: ""
@@ -64,10 +59,29 @@ jobs:
             cargo build --release
           fi
 
-      - name: Download FFmpeg static binaries (mwader/static-ffmpeg v7.1)
+      - name: Download FFmpeg (macOS — evermeet.cx)
+        if: runner.os == 'macOS'
         run: |
-          curl -fL --retry 3 --retry-delay 5 -o ffmpeg$FFEXT "https://github.com/mwader/static-ffmpeg/releases/download/v7.1/ffmpeg.${{ matrix.ff }}${{ matrix.ffext }}"
-          curl -fL --retry 3 --retry-delay 5 -o ffprobe$FFEXT "https://github.com/mwader/static-ffmpeg/releases/download/v7.1/ffprobe.${{ matrix.ff }}${{ matrix.ffext }}"
+          curl -fL --retry 3 -o ffmpeg.zip "https://evermeet.cx/ffmpeg/getrelease/ffmpeg/zip"
+          curl -fL --retry 3 -o ffprobe.zip "https://evermeet.cx/ffmpeg/getrelease/ffprobe/zip"
+          python3 -c "import zipfile; zipfile.ZipFile('ffmpeg.zip').extractall('.'); zipfile.ZipFile('ffprobe.zip').extractall('.')"
+          chmod +x ffmpeg ffprobe
+
+      - name: Download FFmpeg (Linux / Windows — BtbN builds)
+        if: runner.os != 'macOS'
+        run: |
+          if [ "$RUNNER_OS" = "Linux" ]; then
+            URL="https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-n7.1-latest-linux64-gpl-7.1.tar.xz"
+          else
+            URL="https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-n7.1-latest-win64-gpl-7.1.zip"
+          fi
+          curl -fL --retry 3 -o ffmpeg_pkg "$URL"
+          mkdir -p ffmpeg_pkg_x
+          tar -xf ffmpeg_pkg -C ffmpeg_pkg_x
+          FF="$(find ffmpeg_pkg_x -type f -name 'ffmpeg*' ! -name '*.html' | head -1)"
+          FP="$(find ffmpeg_pkg_x -type f -name 'ffprobe*' | head -1)"
+          cp "$FF" ffmpeg$FFEXT
+          cp "$FP" ffprobe$FFEXT
           chmod +x ffmpeg$FFEXT ffprobe$FFEXT
 
       - name: Download Real-ESRGAN sidecar + models
