@@ -66,14 +66,14 @@ jobs:
 
       - name: Download FFmpeg static binaries (mwader/static-ffmpeg v7.1)
         run: |
-          curl -sL -o ffmpeg$FFEXT "https://github.com/mwader/static-ffmpeg/releases/download/v7.1/ffmpeg.${{ matrix.ff }}${{ matrix.ffext }}"
-          curl -sL -o ffprobe$FFEXT "https://github.com/mwader/static-ffmpeg/releases/download/v7.1/ffprobe.${{ matrix.ff }}${{ matrix.ffext }}"
+          curl -fL --retry 3 --retry-delay 5 -o ffmpeg$FFEXT "https://github.com/mwader/static-ffmpeg/releases/download/v7.1/ffmpeg.${{ matrix.ff }}${{ matrix.ffext }}"
+          curl -fL --retry 3 --retry-delay 5 -o ffprobe$FFEXT "https://github.com/mwader/static-ffmpeg/releases/download/v7.1/ffprobe.${{ matrix.ff }}${{ matrix.ffext }}"
           chmod +x ffmpeg$FFEXT ffprobe$FFEXT
 
       - name: Download Real-ESRGAN sidecar + models
         run: |
-          curl -sL -o esrgan.zip "https://github.com/xinntao/Real-ESRGAN/releases/download/v0.2.5.0/${{ matrix.esrgan }}"
-          unzip -q -o esrgan.zip -d sidecars_esrgan
+          curl -fL --retry 3 --retry-delay 5 -o esrgan.zip "https://github.com/xinntao/Real-ESRGAN/releases/download/v0.2.5.0/${{ matrix.esrgan }}"
+          python3 -c "import zipfile; zipfile.ZipFile('esrgan.zip').extractall('sidecars_esrgan')"
           rm esrgan.zip
 
       - name: Assemble package
