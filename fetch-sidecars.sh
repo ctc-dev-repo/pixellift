@@ -20,10 +20,11 @@ ZIP="realesrgan-ncnn-vulkan-20220424-$PKG.zip"
 
 echo "Downloading $ZIP ..."
 curl -sL -o "$SIDECARS/$ZIP" "$BASE/$ZIP"
-unzip -q -o "$SIDECARS/$ZIP" -d "$SIDECARS/esrgan"
+mkdir -p "$SIDECARS/realesrgan"
+unzip -q -o "$SIDECARS/$ZIP" "realesrgan-ncnn-vulkan*" "models/*" -d "$SIDECARS/realesrgan/"
 rm "$SIDECARS/$ZIP"
 
-BIN_DIR="$(find "$SIDECARS/esrgan" -type f -name 'realesrgan-ncnn-vulkan*' ! -name '*.param' ! -name '*.bin' | head -1 | xargs dirname)"
+BIN_DIR="$SIDECARS/realesrgan"
 echo "Sidecar installed: $BIN_DIR"
 echo
 echo "Run PixelLift with:"
