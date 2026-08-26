@@ -1,0 +1,4 @@
+target/
+sidecars/esrgan/
+sidecars/*.zip
+.DS_Store
