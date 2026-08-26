@@ -4,19 +4,29 @@
 your GPU via Vulkan (NVIDIA, AMD, and Intel), orchestrated by a single native
 Rust binary. CLI today, GUI in milestone 2.
 
-## Status: Milestone 1 — CLI engine ✅
-
-The full pipeline works end-to-end and is verified:
-`probe → frame extract → AI upscale (chunked, resumable) → encode (audio preserved)`.
+## Status: Milestones 1–3 complete ✅
 
 | Milestone | Scope | Status |
 |---|---|---|
 | 1 | CLI engine: probe/extract/upscale/encode, progress, cancel, resume | ✅ done |
-| 2 | egui GUI: drag & drop, presets, progress, preview | planned |
-| 3 | Packaging: bundled sidecars, Windows/Linux/macOS builds via CI | planned |
+| 2 | egui GUI: drag & drop, presets, progress, cancel, log | ✅ done |
+| 3 | Packaging: Windows/Linux/macOS release zips with bundled sidecars | ✅ done |
 | 4 | Extras: RIFE frame interpolation, batch queues, HDR tone-mapping | planned |
 
-## Build & run
+## Download (no build required)
+
+Grab a per-OS zip from **Releases** — each bundles PixelLift, FFmpeg, and the
+Real-ESRGAN sidecar + models. Unzip, then:
+
+- **Windows:** double-click `pixellift.exe`
+- **macOS:** right-click the binary → Open (first run, Gatekeeper), or run
+  `./pixellift` in Terminal from the folder
+- **Linux:** `./pixellift` (needs Vulkan drivers — anything that games, works)
+
+No input file given opens the GUI; pass `--input` for CLI mode. The GUI
+auto-detects the bundled sidecar in `sidecars/realesrgan/`.
+
+## Build from source
 
 ```bash
 ./fetch-sidecars.sh          # downloads Real-ESRGAN sidecar + models

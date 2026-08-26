@@ -1,0 +1,104 @@
+name: build-release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  build:
+    name: ${{ matrix.name }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: macos-arm64
+            os: macos-14
+            ff: macos-arm64
+            ffext: ""
+            esrgan: realesrgan-ncnn-vulkan-20220424-macos.zip
+          - name: macos-intel
+            os: macos-13
+            ff: macos-amd64
+            ffext: ""
+            esrgan: realesrgan-ncnn-vulkan-20220424-macos.zip
+          - name: linux-amd64
+            os: ubuntu-22.04
+            ff: linux-amd64
+            ffext: ""
+            esrgan: realesrgan-ncnn-vulkan-20220424-ubuntu.zip
+          - name: windows-amd64
+            os: windows-2022
+            ff: windows-amd64
+            ffext: .exe
+            esrgan: realesrgan-ncnn-vulkan-20220424-windows.zip
+    runs-on: ${{ matrix.os }}
+    env:
+      BIN: pixellift${{ matrix.ffext }}
+      DIST: dist/pixellift-${{ matrix.name }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Build (release)
+        run: cargo build --release
+
+      - name: Download FFmpeg static binaries (mwader/static-ffmpeg v7.1)
+        run: |
+          curl -sL -o ffmpeg "https://github.com/mwader/static-ffmpeg/releases/download/v7.1/ffmpeg.${{ matrix.ff }}${{ matrix.ffext }}"
+          curl -sL -o ffprobe "https://github.com/mwader/static-ffmpeg/releases/download/v7.1/ffprobe.${{ matrix.ff }}${{ matrix.ffext }}"
+          chmod +x ffmpeg ffprobe
+
+      - name: Download Real-ESRGAN sidecar + models
+        run: |
+          curl -sL -o esrgan.zip "https://github.com/xinntao/Real-ESRGAN/releases/download/v0.2.5.0/${{ matrix.esrgan }}"
+          unzip -q -o esrgan.zip -d sidecars_esrgan
+          rm esrgan.zip
+
+      - name: Assemble package
+        run: |
+          mkdir -p "$DIST/sidecars/realesrgan"
+          cp target/release/pixellift"$FFEXT" "$DIST/$BIN"
+          cp ffmpeg ffprobe "$DIST/"
+          cp -r sidecars_esrgan/realesrgan-ncnn-vulkan-20220424-*/. "$DIST/sidecars/realesrgan/"
+          cp README.md THIRD-PARTY-NOTICES.txt "$DIST/"
+          if [ "$RUNNER_OS" != "Windows" ]; then chmod +x "$DIST/$BIN" "$DIST/ffmpeg" "$DIST/ffprobe" "$DIST/sidecars/realesrgan/realesrgan-ncnn-vulkan"; fi
+        env:
+          FFEXT: ${{ matrix.ffext }}
+
+      - name: Zip
+        run: |
+          cd dist
+          if [ "$RUNNER_OS" = "Windows" ]; then
+            tar -a -c -f "pixellift-${{ matrix.name }}.zip" "pixellift-${{ matrix.name }}"
+          else
+            zip -qr "pixellift-${{ matrix.name }}.zip" "pixellift-${{ matrix.name }}"
+          fi
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pixellift-${{ matrix.name }}
+          path: dist/*.zip
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          merge-multiple: true
+          path: dist
+
+      - name: Create GitHub release
+        run: gh release create "$GITHUB_REF_NAME" dist/*.zip --generate-notes --title "PixelLift $GITHUB_REF_NAME"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

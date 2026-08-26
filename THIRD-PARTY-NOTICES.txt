@@ -1,0 +1,36 @@
+THIRD-PARTY NOTICES for PixelLift
+=================================
+
+PixelLift application code is licensed under the Apache License 2.0.
+This distribution bundles third-party binaries; each is governed by its own
+license, summarized below. Review the full license texts at the linked
+project pages before redistribution.
+
+FFmpeg (ffmpeg, ffprobe)
+------------------------
+Source: https://ffmpeg.org
+This FFmpeg build is licensed under the GNU General Public License (GPL)
+because it is compiled with libx264 and libx265 encoders.
+FFmpeg is (c) the FFmpeg developers, licensed under GPL/LGPL as noted.
+Note: PixelLift invokes FFmpeg as a separate program; it is not linked into
+PixelLift's own code.
+
+Real-ESRGAN ncnn Vulkan (realesrgan-ncnn-vulkan + models)
+---------------------------------------------------------
+Source: https://github.com/xinntao/Real-ESRGAN-ncnn-vulkan
+Copyright (c) 2021 Xinyi Yu (xinntao). Licensed under the BSD 3-Clause License.
+Up-scaling models (realesr-animevideov3, realesrgan-x4plus and variants)
+are provided under the same license terms as the Real-ESRGAN project
+(https://github.com/xinntao/Real-ESRGAN).
+
+Rust library dependencies (statically linked into the PixelLift binary)
+-----------------------------------------------------------------------
+eframe / egui — MIT OR Apache-2.0      (https://github.com/emilk/egui)
+clap         — MIT OR Apache-2.0      (https://github.com/clap-rs/clap)
+anyhow       — MIT OR Apache-2.0      (https://github.com/dtolnay/anyhow)
+serde        — MIT OR Apache-2.0      (https://github.com/serde-rs/serde)
+ctrlc        — MIT OR Apache-2.0      (https://github.com/Detegr/rust-ctrlc)
+rfd          — MIT                    (https://github.com/PolyMeilex/rfd)
+
+Full dependency list: `cargo license` from the source checkout at
+https://github.com/ctc-dev-repo/pixellift

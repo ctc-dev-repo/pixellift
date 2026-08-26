@@ -87,28 +87,38 @@ impl Default for PixelLiftApp {
 }
 
 fn autodetect_esrgan() -> Option<PathBuf> {
-    let base = std::env::current_dir().ok()?.join("sidecars");
-    fn scan(dir: &Path, depth: usize) -> Option<PathBuf> {
-        if depth > 4 {
-            return None;
-        }
-        for e in std::fs::read_dir(dir).ok()? {
-            let p = e.ok()?.path();
-            if p.is_dir() {
-                if let Some(found) = scan(&p, depth + 1) {
-                    return Some(found);
-                }
-            } else if p
-                .file_name()
-                .map(|n| n.to_string_lossy().starts_with("realesrgan-ncnn-vulkan"))
-                .unwrap_or(false)
-            {
-                return Some(p);
+    // 1) next to the executable (packaged layout: <app>/sidecars/realesrgan/…)
+    if let Ok(exe) = std::env::current_exe() {
+        if let Some(dir) = exe.parent() {
+            if let Some(found) = scan_sidecars(&dir.join("sidecars"), 0) {
+                return Some(found);
             }
         }
-        None
     }
-    scan(&base, 0)
+    // 2) current working directory (repo / dev layout: ./sidecars/…)
+    let base = std::env::current_dir().ok()?.join("sidecars");
+    scan_sidecars(&base, 0)
+}
+
+fn scan_sidecars(dir: &Path, depth: usize) -> Option<PathBuf> {
+    if depth > 4 {
+        return None;
+    }
+    for e in std::fs::read_dir(dir).ok()? {
+        let p = e.ok()?.path();
+        if p.is_dir() {
+            if let Some(found) = scan_sidecars(&p, depth + 1) {
+                return Some(found);
+            }
+        } else if p
+            .file_name()
+            .map(|n| n.to_string_lossy().starts_with("realesrgan-ncnn-vulkan"))
+            .unwrap_or(false)
+        {
+            return Some(p);
+        }
+    }
+    None
 }
 
 fn crf_for(codec: &Codec, quality: f32) -> u32 {
