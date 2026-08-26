@@ -21,35 +21,48 @@ jobs:
         include:
           - name: macos-arm64
             os: macos-14
+            target: ""
             ff: macos-arm64
             ffext: ""
-            esrgan: realesrgan-ncnn-vulkan-20220424-macos.zip
           - name: macos-intel
-            os: macos-13
+            os: macos-14
+            target: x86_64-apple-darwin
             ff: macos-amd64
             ffext: ""
-            esrgan: realesrgan-ncnn-vulkan-20220424-macos.zip
           - name: linux-amd64
             os: ubuntu-22.04
+            target: ""
             ff: linux-amd64
             ffext: ""
-            esrgan: realesrgan-ncnn-vulkan-20220424-ubuntu.zip
           - name: windows-amd64
             os: windows-2022
+            target: ""
             ff: windows-amd64
             ffext: .exe
-            esrgan: realesrgan-ncnn-vulkan-20220424-windows.zip
     runs-on: ${{ matrix.os }}
     env:
+      FFEXT: ${{ matrix.ffext }}
       BIN: pixellift${{ matrix.ffext }}
+      BIN_PATH: target/${{ matrix.target }}/release/pixellift${{ matrix.ffext }}
       DIST: dist/pixellift-${{ matrix.name }}
     steps:
       - uses: actions/checkout@v4
 
       - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Add cross-compile target
+        if: matrix.target != ''
+        run: rustup target add ${{ matrix.target }}
 
       - name: Build (release)
-        run: cargo build --release
+        run: |
+          if [ -n "${{ matrix.target }}" ]; then
+            cargo build --release --target ${{ matrix.target }}
+          else
+            cargo build --release
+          fi
 
       - name: Download FFmpeg static binaries (mwader/static-ffmpeg v7.1)
         run: |
@@ -66,17 +79,18 @@ jobs:
       - name: Assemble package
         run: |
           mkdir -p "$DIST/sidecars/realesrgan"
-          cp target/release/pixellift"$FFEXT" "$DIST/$BIN"
-          cp ffmpeg"$FFEXT" ffprobe"$FFEXT" "$DIST/"
+          cp "$BIN_PATH" "$DIST/$BIN"
+          cp ffmpeg$FFEXT ffprobe$FFEXT "$DIST/"
           # the 20220424 zips carry binary + models/ at the zip root
           cp sidecars_esrgan/realesrgan-ncnn-vulkan* "$DIST/sidecars/realesrgan/"
           cp -r sidecars_esrgan/models "$DIST/sidecars/realesrgan/models"
           cp README.md THIRD-PARTY-NOTICES.txt "$DIST/"
           if [ "$RUNNER_OS" != "Windows" ]; then
-            chmod +x "$DIST/$BIN" "$DIST/ffmpeg" "$DIST/ffprobe" "$DIST/sidecars/realesrgan/realesrgan-ncnn-vulkan"
+            chmod +x "$DIST/$BIN" "$DIST/ffmpeg$FFEXT" "$DIST/ffprobe$FFEXT" \
+                     "$DIST/sidecars/realesrgan/realesrgan-ncnn-vulkan"*
           fi
         env:
-          FFEXT: ${{ matrix.ffext }}
+          ESRGAN_PKG: ${{ matrix.esrgan }}
 
       - name: Zip
         run: |
