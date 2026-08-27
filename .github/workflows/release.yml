@@ -1,4 +1,4 @@
-name: build-release-v2
+name: build-release-v3-v2
 
 on:
   push:
