@@ -141,7 +141,6 @@ jobs:
 
       - name: Create GitHub release
         run: |
-          cd dist
-          gh release create "$GITHUB_REF_NAME" *.zip --generate-notes --title "PixelLift $GITHUB_REF_NAME"
+          gh release create "$GITHUB_REF_NAME" dist/*.zip --generate-notes --title "PixelLift $GITHUB_REF_NAME"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
