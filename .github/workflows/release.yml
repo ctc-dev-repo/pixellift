@@ -24,16 +24,19 @@ jobs:
             target: ""
             ff: macos-arm64
             ffext: ""
+            esrgan: realesrgan-ncnn-vulkan-20220424-macos.zip
           - name: linux-amd64
             os: ubuntu-22.04
             target: ""
             ff: linux-amd64
             ffext: ""
+            esrgan: realesrgan-ncnn-vulkan-20220424-ubuntu.zip
           - name: windows-amd64
             os: windows-2022
             target: ""
             ff: windows-amd64
             ffext: .exe
+            esrgan: realesrgan-ncnn-vulkan-20220424-windows.zip
     runs-on: ${{ matrix.os }}
     env:
       FFEXT: ${{ matrix.ffext }}
