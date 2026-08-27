@@ -140,7 +140,7 @@ release:
         path: dist
 
     - name: Create GitHub release
-      uses: softprops/action-gh-release@v2
+      run: gh release create "$GITHUB_REF_NAME" dist/*.zip --generate-notes --title "PixelLift ${{ github.ref_name }}" --repo "$GITHUB_REPOSITORY"
       with:
         files: dist/*.zip
         generate_release_notes: true
