@@ -1,4 +1,4 @@
-name: build-release-v3-v2
+name: build-release
 
 on:
   push:
@@ -130,14 +130,14 @@ jobs:
           path: dist/*.zip
 
 release:
-    needs: build
-    runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/')
-    steps:
-      - uses: actions/download-artifact@v4
-        with:
-          merge-multiple: true
-          path: dist
+  needs: build
+  runs-on: ubuntu-latest
+  if: startsWith(github.ref, 'refs/tags/')
+  steps:
+    - uses: actions/download-artifact@v4
+      with:
+        merge-multiple: true
+        path: dist
 
       - name: Create GitHub release
         uses: softprops/action-gh-release@v2
@@ -147,3 +147,4 @@ release:
           name: "PixelLift ${{ github.ref_name }}"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
