@@ -31,12 +31,7 @@ jobs:
             ff: linux-amd64
             ffext: ""
             esrgan: realesrgan-ncnn-vulkan-20220424-ubuntu.zip
-          - name: windows-amd64
-            os: windows-2022
-            target: ""
-            ff: windows-amd64
-            ffext: .exe
-            esrgan: realesrgan-ncnn-vulkan-20220424-windows.zip
+          
     runs-on: ${{ matrix.os }}
     env:
       FFEXT: ${{ matrix.ffext }}
@@ -62,7 +57,7 @@ jobs:
             cargo build --release
           fi
 
-      - name: Download FFmpeg (macOS — evermeet.cx)
+      - name: Download FFmpeg (macOS -- evermeet.cx)
         if: runner.os == 'macOS'
         run: |
           curl -fL --retry 3 -o ffmpeg.zip "https://evermeet.cx/ffmpeg/getrelease/ffmpeg/zip"
@@ -70,23 +65,14 @@ jobs:
           python3 -c "import zipfile; zipfile.ZipFile('ffmpeg.zip').extractall('.'); zipfile.ZipFile('ffprobe.zip').extractall('.')"
           chmod +x ffmpeg ffprobe
 
-      - name: Download FFmpeg (Linux / Windows — BtbN builds)
-        if: runner.os != 'macOS'
+      - name: Download FFmpeg (Linux -- BtbN builds)
+        if: runner.os == 'Linux'
         run: |
-          if [ "$RUNNER_OS" = "Linux" ]; then
-            URL="https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-linux64-gpl.tar.xz"
-            EXT=".tar.xz"
-          else
-            URL="https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-win64-gpl.zip"
-            EXT=".zip"
-          fi
+          URL="https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-linux64-gpl.tar.xz"
+          EXT=".tar.xz"
           curl -fL --retry 3 -o ffmpeg_pkg "$URL"
           mkdir -p ffmpeg_pkg_x
-          if [ "$EXT" = ".tar.xz" ]; then
-            tar -xf ffmpeg_pkg -C ffmpeg_pkg_x
-          else
-            python3 -c "import zipfile; zipfile.ZipFile('ffmpeg_pkg').extractall('ffmpeg_pkg_x')"
-          fi
+          tar -xf ffmpeg_pkg -C ffmpeg_pkg_x
           FF="$(find ffmpeg_pkg_x -type f -name 'ffmpeg*' ! -name '*.html' | head -1)"
           FP="$(find ffmpeg_pkg_x -type f -name 'ffprobe*' | head -1)"
           cp "$FF" ffmpeg$FFEXT
@@ -108,21 +94,15 @@ jobs:
           cp sidecars_esrgan/realesrgan-ncnn-vulkan* "$DIST/sidecars/realesrgan/"
           cp -r sidecars_esrgan/models "$DIST/sidecars/realesrgan/models"
           cp README.md THIRD-PARTY-NOTICES.txt "$DIST/"
-          if [ "$RUNNER_OS" != "Windows" ]; then
-            chmod +x "$DIST/$BIN" "$DIST/ffmpeg$FFEXT" "$DIST/ffprobe$FFEXT" \
-                     "$DIST/sidecars/realesrgan/realesrgan-ncnn-vulkan"*
-          fi
+          chmod +x "$DIST/$BIN" "$DIST/ffmpeg$FFEXT" "$DIST/ffprobe$FFEXT" \
+                   "$DIST/sidecars/realesrgan/realesrgan-ncnn-vulkan"*
         env:
           ESRGAN_PKG: ${{ matrix.esrgan }}
 
       - name: Zip
         run: |
           cd dist
-          if [ "$RUNNER_OS" = "Windows" ]; then
-            tar -a -c -f "pixellift-${{ matrix.name }}.zip" "pixellift-${{ matrix.name }}"
-          else
-            zip -qr "pixellift-${{ matrix.name }}.zip" "pixellift-${{ matrix.name }}"
-          fi
+          zip -qr "pixellift-${{ matrix.name }}.zip" "pixellift-${{ matrix.name }}"
 
       - uses: actions/upload-artifact@v4
         with:
@@ -140,7 +120,7 @@ release:
         path: dist
 
     - name: Create GitHub release
-        run: |
-          gh release create "$GITHUB_REF_NAME" dist/*.zip --generate-notes --title "PixelLift ${{ github.ref_name }}" --repo "$GITHUB_REPOSITORY"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        gh release create "$GITHUB_REF_NAME" dist/*.zip --generate-notes --title "PixelLift ${{ github.ref_name }}" --repo "$GITHUB_REPOSITORY"
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
