@@ -140,10 +140,7 @@ release:
         path: dist
 
     - name: Create GitHub release
-      run: gh release create "$GITHUB_REF_NAME" dist/*.zip --generate-notes --title "PixelLift ${{ github.ref_name }}" --repo "$GITHUB_REPOSITORY"
-      with:
-        files: dist/*.zip
-        generate_release_notes: true
-        name: "PixelLift ${{ github.ref_name }}"
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" dist/*.zip --generate-notes --title "PixelLift ${{ github.ref_name }}" --repo "$GITHUB_REPOSITORY"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
