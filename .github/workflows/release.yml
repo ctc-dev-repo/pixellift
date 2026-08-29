@@ -109,7 +109,7 @@ jobs:
           name: pixellift-${{ matrix.name }}
           path: dist/*.zip
 
-release:
+  release:
     needs: build
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/')
@@ -136,3 +136,4 @@ release:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
