@@ -120,10 +120,22 @@ release:
           path: dist
 
       - name: Create GitHub release
-        uses: softprops/action-gh-release@v2
-        with:
-          files: dist/*.zip
-          generate_release_notes: true
-          name: "PixelLift ${{ github.ref_name }}"
+        run: |
+          curl -fL --retry 3 -o release.json "https://api.github.com/repos/${{ github.repository }}/releases" \
+            -H "Authorization: Bearer ${GITHUB_TOKEN}" \
+            -H "Accept: application/vnd.github+json" \
+            -d "{\"tag_name\":\"${{ github.ref_name }}\",\"name\":\"PixelLift ${{ github.ref_name }}\",\"body\":\"Automated release built from commit ${{ github.sha }}\",\"draft\":false,\"prerelease\":false}" | jq -r .id
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Upload release assets
+        run: |
+          for file in dist/*.zip; do
+            curl -fL --retry 3 -X POST \
+              -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+              -H "Accept: application/vnd.github+json" \
+              -H "Content-Type: application/zip" \
+              --data-binary @"${file}" \
+              "https://uploads.github.com/repos/${{ github.repository }}/releases/$(curl -s -H \"Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}\" -H \"Accept: application/vnd.github+json\" \"https://api.github.com/repos/${{ github.repository }}/releases/tags/${{ github.ref_name }}\" | jq -r .id)/assets?name=$(basename \"${file}\")"
+          done
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
